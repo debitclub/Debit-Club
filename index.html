@@ -376,6 +376,79 @@
   button#send:active:not(:disabled){ transform: translateY(1px); }
   button#send:disabled{ opacity:0.45; cursor:default; }
 
+  button#attachBtn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 15px;
+    background: var(--paper);
+    color: var(--ink-soft);
+    border: 1.5px solid var(--rule-strong);
+    border-radius: 3px;
+    width: 44px; height: 44px;
+    cursor:pointer;
+    flex-shrink:0;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  button#attachBtn:hover{ background: var(--paper-deep); color: var(--ink); }
+
+  .attachments-row{
+    display:flex; flex-wrap:wrap; gap:6px;
+    padding: 0 16px;
+  }
+  .attachments-row:not(:empty){ padding-top: 10px; }
+  .attach-chip{
+    display:flex; align-items:center; gap:6px;
+    background: var(--paper-alt);
+    border: 1px solid var(--rule-strong);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    max-width: 220px;
+  }
+  .attach-chip .fname{
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .attach-chip .remove{
+    background:none; border:none; cursor:pointer;
+    color: var(--pencil);
+    font-size: 13px;
+    line-height:1;
+    padding:0;
+    flex-shrink:0;
+  }
+
+  .chat-panel{ position: relative; }
+  .dropzone-overlay{
+    position:absolute; inset:0;
+    background: rgba(237, 240, 230, 0.94);
+    border: 2.5px dashed var(--pencil);
+    border-radius: 4px;
+    display:none;
+    align-items:center; justify-content:center;
+    flex-direction:column;
+    gap:8px;
+    z-index: 10;
+    pointer-events:none;
+  }
+  .dropzone-overlay.active{ display:flex; }
+  .dropzone-overlay .hand{
+    font-size: 28px; color: var(--pencil);
+  }
+  .dropzone-overlay .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color: var(--ink-soft);
+  }
+
+  .msg-attachments{
+    display:flex; flex-wrap:wrap; gap:5px;
+    margin-bottom:6px;
+  }
+  .msg-attachments .attach-chip{ cursor:default; }
+
   footer{
     max-width:920px; margin:0 auto; padding: 0 24px 48px;
     font-family:'IBM Plex Mono', monospace;
@@ -384,6 +457,75 @@
     display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
     border-top: 1px solid var(--rule);
     padding-top: 16px;
+  }
+
+  /* ---------- Mobile ---------- */
+  @media (max-width: 640px){
+    header.topbar{ padding: 12px 16px; }
+    .wordmark{ font-size: 11.5px; letter-spacing: 0.1em; }
+    .folio{ font-size: 10px; }
+
+    .hero{ padding: 32px 16px 22px; }
+    .eyebrow{ font-size: 11px; margin-bottom: 12px; }
+    h1.headline{ font-size: clamp(1.7rem, 8vw, 2.4rem); max-width: none; margin-bottom: 14px; }
+    .sub{ font-size: 14.5px; max-width: none; }
+
+    .tabs{
+      margin-top: 22px;
+      padding: 0 16px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .tabs::-webkit-scrollbar{ display:none; }
+    .tab{
+      flex: 0 0 auto;
+      min-width: 148px;
+      padding: 10px 12px 12px;
+      font-size: 11.5px;
+    }
+    .tab .desc{ font-size: 10.5px; }
+
+    .stage{ padding: 18px 16px 70px; gap: 20px; }
+    .chip-panel-title{ margin-bottom: 8px; }
+    .chips{ flex-direction: row; flex-wrap: wrap; gap: 6px; }
+    .chip{
+      flex: 0 0 auto;
+      background: var(--paper-alt);
+      border: 1px solid var(--rule-strong);
+      border-radius: 14px;
+      padding: 7px 12px;
+      font-size: 12.5px;
+      max-width: 100%;
+    }
+    .chip .mark{ font-size: 15px; }
+    .chip.used{ background: none; }
+
+    .chat-panel{ min-height: 400px; border-radius: 3px; }
+    .chat-head{ padding: 10px 12px; }
+    .chat-head .title{ font-size: 10.5px; }
+
+    .messages{ padding: 14px 12px 6px; max-height: 46vh; gap: 12px; }
+    .msg .bubble{ font-size: 14px; }
+
+    .attachments-row{ padding: 0 12px; }
+    .attach-chip{ max-width: 150px; font-size: 11px; }
+
+    .input-row{ padding: 10px 12px 12px; gap: 6px; }
+    textarea#composer{ font-size: 16px; padding: 9px 10px; } /* 16px prevents iOS auto-zoom on focus */
+    button#attachBtn{ width: 40px; height: 40px; font-size: 14px; }
+    button#send{
+      padding: 10px 12px;
+      font-size: 0;
+    }
+    button#send::after{
+      content: "→";
+      font-size: 16px;
+    }
+
+    .dropzone-overlay .label{ font-size: 11px; text-align:center; padding: 0 20px; }
+
+    footer{ padding: 0 16px 32px; padding-top: 14px; font-size: 10px; flex-direction: column; }
   }
 </style>
 </head>
@@ -408,15 +550,22 @@
     <div class="chips" id="chips"></div>
   </aside>
 
-  <section class="chat-panel">
+  <section class="chat-panel" id="chatPanel">
     <div class="chat-head">
       <span class="title" id="chatTitle">Audit &amp; Accounting Desk</span>
       <button class="clear" id="clearBtn">clear thread</button>
     </div>
     <div class="messages" id="messages"></div>
+    <div class="attachments-row" id="attachmentsRow"></div>
     <div class="input-row">
+      <input type="file" id="fileInput" multiple hidden accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,.csv,.txt,text/csv,text/plain,application/json" />
+      <button id="attachBtn" type="button" title="Attach a file">📎</button>
       <textarea id="composer" placeholder="Ask about a journal entry, a reconciling item, a ratio…" rows="1"></textarea>
       <button id="send">Post entry →</button>
+    </div>
+    <div class="dropzone-overlay" id="dropzone">
+      <div class="hand">✓</div>
+      <div class="label">Drop file to attach — CSV, PDF, image, or text</div>
     </div>
   </section>
 </main>
@@ -554,10 +703,28 @@ function renderMessages(){
     const row = document.createElement('div');
     row.className = 'msg ' + msg.role;
     const roleLabel = msg.role === 'user' ? 'You' : 'Debit Club';
-    row.innerHTML = `<div class="role">${roleLabel}</div><div class="bubble">${escapeAndFormat(msg.content)}</div>`;
+    let attachHtml = '';
+    if(msg.attachments && msg.attachments.length){
+      attachHtml = `<div class="msg-attachments">${msg.attachments.map(a =>
+        `<span class="attach-chip"><span>${fileIcon(a.kind)}</span><span class="fname">${escapeText(a.name)}</span></span>`
+      ).join('')}</div>`;
+    }
+    row.innerHTML = `<div class="role">${roleLabel}</div>${attachHtml}<div class="bubble">${escapeAndFormat(msg.displayText)}</div>`;
     messagesEl.appendChild(row);
   });
   messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function escapeText(text){
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function fileIcon(kind){
+  if(kind === 'image') return '🖼';
+  if(kind === 'document') return '📄';
+  return '📎';
 }
 
 function escapeAndFormat(text){
@@ -593,21 +760,156 @@ composer.addEventListener('keydown', (e) => {
 clearBtn.addEventListener('click', () => {
   if(isLoading) return;
   threads[currentModeId] = [];
+  pendingAttachments = [];
+  renderAttachmentsRow();
   renderMessages();
 });
+
+// ---------- File attachment handling ----------
+const MAX_FILE_BYTES = 3 * 1024 * 1024; // 3MB per file (base64 inflates ~33%, stays under Vercel's 4.5MB request cap)
+const IMAGE_TYPES = ['image/png','image/jpeg','image/gif','image/webp'];
+const TEXT_TYPES = ['text/csv','text/plain','application/json'];
+
+let pendingAttachments = []; // { name, kind: 'image'|'document'|'text', mediaType, base64, textContent }
+
+const fileInput = document.getElementById('fileInput');
+const attachBtn = document.getElementById('attachBtn');
+const attachmentsRow = document.getElementById('attachmentsRow');
+const chatPanel = document.getElementById('chatPanel');
+const dropzone = document.getElementById('dropzone');
+
+attachBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', (e) => {
+  handleFiles(e.target.files);
+  fileInput.value = '';
+});
+
+let dragCounter = 0;
+chatPanel.addEventListener('dragenter', (e) => {
+  e.preventDefault();
+  dragCounter++;
+  dropzone.classList.add('active');
+});
+chatPanel.addEventListener('dragover', (e) => e.preventDefault());
+chatPanel.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dragCounter--;
+  if(dragCounter <= 0){ dragCounter = 0; dropzone.classList.remove('active'); }
+});
+chatPanel.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dragCounter = 0;
+  dropzone.classList.remove('active');
+  if(e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(fileList){
+  Array.from(fileList).forEach(file => {
+    if(file.size > MAX_FILE_BYTES){
+      showComposerError(`"${file.name}" is over 4MB — try a smaller file.`);
+      return;
+    }
+    const isImage = IMAGE_TYPES.includes(file.type);
+    const isPdf = file.type === 'application/pdf';
+    const isText = TEXT_TYPES.includes(file.type) || file.name.endsWith('.csv') || file.name.endsWith('.txt');
+
+    if(isImage || isPdf){
+      const reader = new FileReader();
+      reader.onload = () => {
+        const base64 = reader.result.split(',')[1];
+        pendingAttachments.push({
+          name: file.name,
+          kind: isImage ? 'image' : 'document',
+          mediaType: file.type || 'application/pdf',
+          base64
+        });
+        renderAttachmentsRow();
+      };
+      reader.onerror = () => showComposerError(`Couldn't read "${file.name}".`);
+      reader.readAsDataURL(file);
+    } else if(isText){
+      const reader = new FileReader();
+      reader.onload = () => {
+        pendingAttachments.push({
+          name: file.name,
+          kind: 'text',
+          textContent: reader.result
+        });
+        renderAttachmentsRow();
+      };
+      reader.onerror = () => showComposerError(`Couldn't read "${file.name}".`);
+      reader.readAsText(file);
+    } else {
+      showComposerError(`"${file.name}" isn't a supported type. Use CSV, TXT, PDF, or an image.`);
+    }
+  });
+}
+
+function showComposerError(text){
+  const row = document.createElement('div');
+  row.className = 'error-row';
+  row.textContent = text;
+  messagesEl.appendChild(row);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function renderAttachmentsRow(){
+  attachmentsRow.innerHTML = '';
+  pendingAttachments.forEach((a, idx) => {
+    const chip = document.createElement('div');
+    chip.className = 'attach-chip';
+    chip.innerHTML = `<span>${fileIcon(a.kind)}</span><span class="fname">${escapeText(a.name)}</span><button class="remove" title="Remove">✕</button>`;
+    chip.querySelector('.remove').addEventListener('click', () => {
+      pendingAttachments.splice(idx, 1);
+      renderAttachmentsRow();
+    });
+    attachmentsRow.appendChild(chip);
+  });
+}
 
 sendBtn.addEventListener('click', handleSend);
 
 async function handleSend(){
   const text = composer.value.trim();
-  if(!text || isLoading) return;
+  if((!text && pendingAttachments.length === 0) || isLoading) return;
 
   const mode = currentMode();
   if(mode.chips.includes(text)){
     usedChips[mode.id].add(text);
   }
 
-  threads[mode.id].push({ role:'user', content:text });
+  const attachments = pendingAttachments;
+  pendingAttachments = [];
+  renderAttachmentsRow();
+
+  // Build the content sent to the API: attachment blocks first, then the text.
+  let apiContent;
+  let textForModel = text;
+  const textAttachments = attachments.filter(a => a.kind === 'text');
+  const mediaAttachments = attachments.filter(a => a.kind !== 'text');
+
+  if(textAttachments.length){
+    const appended = textAttachments.map(a => `\n\n--- Attached file: ${a.name} ---\n${a.textContent}`).join('');
+    textForModel = (text || `Here is an attached file: ${textAttachments.map(a=>a.name).join(', ')}`) + appended;
+  }
+
+  if(mediaAttachments.length){
+    const blocks = mediaAttachments.map(a => a.kind === 'image'
+      ? { type: 'image', source: { type: 'base64', media_type: a.mediaType, data: a.base64 } }
+      : { type: 'document', source: { type: 'base64', media_type: a.mediaType, data: a.base64 } }
+    );
+    blocks.push({ type: 'text', text: textForModel || 'Please review the attached file(s).' });
+    apiContent = blocks;
+  } else {
+    apiContent = textForModel;
+  }
+
+  threads[mode.id].push({
+    role: 'user',
+    content: apiContent,
+    displayText: text || (attachments.length ? '(attached file — see below)' : ''),
+    attachments: attachments.map(a => ({ name: a.name, kind: a.kind }))
+  });
   composer.value = '';
   autoGrow();
   renderChips();
@@ -641,7 +943,7 @@ async function handleSend(){
     const reply = textBlocks.join('\n\n') || "No response text returned.";
 
     document.getElementById('loadingRow')?.remove();
-    threads[mode.id].push({ role:'assistant', content: reply });
+    threads[mode.id].push({ role:'assistant', content: reply, displayText: reply, attachments: [] });
     entryCount++;
     entryCountEl.textContent = entryCount + (entryCount === 1 ? ' entry posted' : ' entries posted');
     folioNumEl.textContent = String(entryCount + 1).padStart(3,'0');
@@ -666,3 +968,4 @@ renderMessages();
 
 </body>
 </html>
+
