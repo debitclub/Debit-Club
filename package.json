@@ -1,0 +1,6 @@
+{
+  "name": "debit-club",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Debit Club — financial reasoning assistant (static frontend + Vercel serverless API proxy)"
+}

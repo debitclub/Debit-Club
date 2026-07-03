@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Debit Club — Financial Reasoning Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;1,9..144,500;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&family=Caveat:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EDF0E6;
+    --paper-alt: #E2E8DC;
+    --paper-deep: #D8E1D2;
+    --ink: #16241C;
+    --ink-soft: #45564A;
+    --ink-faint: #7A8A7D;
+    --rule: #B9C9B4;
+    --rule-strong: #93A88D;
+    --pencil: #B23A2F;
+    --pencil-soft: #C96455;
+    --brass: #93732F;
+    --white: #FAFAF7;
+    --shadow: rgba(22,36,28,0.14);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    background-image:
+      repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 27px,
+        var(--rule) 28px
+      );
+    background-attachment: local;
+  }
+  ::selection { background: var(--pencil-soft); color: var(--white); }
+  :focus-visible { outline: 2px solid var(--pencil); outline-offset: 2px; }
+
+  .display { font-family: 'Fraunces', serif; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .hand { font-family: 'Caveat', cursive; }
+
+  /* ---------- Header ---------- */
+  header.topbar{
+    position: sticky; top:0; z-index: 20;
+    background: var(--paper);
+    border-bottom: 1.5px solid var(--rule-strong);
+    padding: 14px 24px;
+    display:flex; align-items:center; justify-content:space-between;
+    backdrop-filter: blur(2px);
+  }
+  .wordmark{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    letter-spacing: 0.14em;
+    font-size: 13px;
+    text-transform: uppercase;
+    display:flex; align-items:center; gap:8px;
+  }
+  .wordmark .ledger-mark{
+    width:9px;height:9px;background:var(--pencil);
+    display:inline-block; transform:rotate(45deg);
+  }
+  .folio{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px; color:var(--ink-faint); letter-spacing:0.08em;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 64px 24px 32px;
+    text-align:left;
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brass);
+    display:flex; align-items:center; gap:8px;
+    margin-bottom: 18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width: 22px; height:1.5px; background: var(--brass);
+    display:inline-block;
+  }
+  h1.headline{
+    font-size: clamp(2.1rem, 5vw, 3.4rem);
+    line-height: 1.06;
+    font-weight: 500;
+    margin: 0 0 20px;
+    max-width: 14ch;
+  }
+  h1.headline em{
+    font-style: italic;
+    font-weight: 500;
+    position:relative;
+    white-space: nowrap;
+  }
+  h1.headline .tick{
+    font-family:'Caveat', cursive;
+    color: var(--pencil);
+    font-size: 0.55em;
+    position: absolute;
+    left: -0.05em;
+    top: -0.35em;
+    transform: rotate(-8deg);
+    opacity:0;
+    animation: tickIn 0.5s ease-out 0.9s forwards;
+  }
+  @keyframes tickIn{
+    0%{ opacity:0; transform: rotate(-8deg) scale(0.4) translateY(6px); }
+    60%{ opacity:1; transform: rotate(-8deg) scale(1.15) translateY(0); }
+    100%{ opacity:1; transform: rotate(-8deg) scale(1) translateY(0); }
+  }
+  .sub{
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    max-width: 52ch;
+    margin: 0;
+  }
+
+  /* ---------- Mode tabs ---------- */
+  .tabs{
+    max-width: 920px;
+    margin: 36px auto 0;
+    padding: 0 24px;
+    display:flex;
+    border-bottom: 1.5px solid var(--rule-strong);
+  }
+  .tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background:none; border:none; cursor:pointer;
+    color: var(--ink-faint);
+    padding: 12px 18px 14px;
+    position: relative;
+    text-align:left;
+    transition: color 0.15s ease;
+    flex: 1;
+  }
+  .tab .num{ color: var(--brass); margin-right:6px; }
+  .tab:hover{ color: var(--ink); }
+  .tab.active{ color: var(--ink); font-weight:600; }
+  .tab.active::after{
+    content:"";
+    position:absolute; left:0; right:0; bottom:-1.5px;
+    height: 2.5px; background: var(--pencil);
+  }
+  .tab .desc{
+    display:block;
+    font-family:'IBM Plex Sans', sans-serif;
+    text-transform:none;
+    letter-spacing:0;
+    font-size:12px;
+    color: var(--ink-faint);
+    margin-top:3px;
+    font-weight:400;
+  }
+
+  /* ---------- Main layout ---------- */
+  .stage{
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 28px 24px 90px;
+    display:grid;
+    grid-template-columns: 250px 1fr;
+    gap: 28px;
+    align-items:start;
+  }
+  @media (max-width: 720px){
+    .stage{ grid-template-columns: 1fr; }
+  }
+
+  .chip-panel-title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 12px;
+  }
+  .chips{ display:flex; flex-direction:column; gap:2px; }
+  .chip{
+    display:flex; align-items:flex-start; gap:8px;
+    text-align:left;
+    background:none; border:none; cursor:pointer;
+    padding: 9px 6px;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 13.5px;
+    line-height:1.4;
+    color: var(--ink-soft);
+    border-radius:3px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .chip:hover{ background: var(--paper-deep); color: var(--ink); }
+  .chip .mark{
+    font-family:'Caveat', cursive;
+    color: var(--rule-strong);
+    font-size: 18px;
+    line-height: 1;
+    margin-top: 1px;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .chip.used .mark{ color: var(--pencil); transform: scale(1.15) rotate(-6deg); }
+  .chip.used{ color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--rule-strong); }
+
+  /* ---------- Chat panel ---------- */
+  .chat-panel{
+    background: var(--white);
+    border: 1.5px solid var(--rule-strong);
+    border-radius: 4px;
+    box-shadow: 0 1px 0 var(--shadow);
+    display:flex;
+    flex-direction:column;
+    min-height: 480px;
+  }
+  .chat-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .chat-head .title{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color: var(--ink-faint);
+  }
+  .chat-head .clear{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    background:none;border:none;cursor:pointer;
+    color: var(--ink-faint);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .chat-head .clear:hover{ color: var(--pencil); }
+
+  .messages{
+    flex:1;
+    padding: 18px 18px 6px;
+    overflow-y:auto;
+    max-height: 52vh;
+    display:flex; flex-direction:column; gap:16px;
+  }
+  .empty-state{
+    color: var(--ink-faint);
+    font-size: 13.5px;
+    line-height:1.6;
+    padding: 20px 4px;
+  }
+  .empty-state .hand{ color: var(--pencil); font-size:20px; }
+
+  .msg{ max-width: 100%; }
+  .msg .role{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: 5px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .msg.user .role{ color: var(--brass); }
+  .msg.assistant .role::before{
+    content:"✓";
+    color: var(--pencil);
+    font-family:'Caveat', cursive;
+    font-size: 15px;
+  }
+  .msg .bubble{
+    font-size: 14.5px;
+    line-height: 1.65;
+    white-space: pre-wrap;
+  }
+  .msg.user .bubble{
+    background: var(--paper-alt);
+    border-left: 2.5px solid var(--brass);
+    padding: 10px 14px;
+    border-radius: 2px;
+  }
+  .msg.assistant .bubble{
+    color: var(--ink);
+    padding-left: 2px;
+  }
+  .msg .bubble strong{ font-weight:600; }
+  .msg .bubble code{
+    font-family:'IBM Plex Mono', monospace;
+    background: var(--paper-alt);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 0.92em;
+  }
+
+  .loading-row{
+    display:flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color: var(--ink-faint);
+  }
+  .ticks span{
+    color: var(--pencil);
+    font-family:'Caveat', cursive;
+    font-size:18px;
+    opacity:0;
+    animation: tickPulse 1.1s infinite;
+  }
+  .ticks span:nth-child(2){ animation-delay:0.18s; }
+  .ticks span:nth-child(3){ animation-delay:0.36s; }
+  @keyframes tickPulse{
+    0%{ opacity:0; transform:translateY(2px); }
+    30%{ opacity:1; transform:translateY(0); }
+    70%{ opacity:1; }
+    100%{ opacity:0; }
+  }
+
+  .error-row{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12.5px;
+    color: var(--pencil);
+    background: #FBEAE7;
+    border: 1px solid var(--pencil-soft);
+    padding: 10px 12px;
+    border-radius: 3px;
+  }
+
+  .input-row{
+    display:flex; gap:10px;
+    padding: 14px 16px 16px;
+    border-top: 1.5px solid var(--rule);
+    align-items:flex-end;
+  }
+  textarea#composer{
+    flex:1;
+    resize:none;
+    border: 1.5px solid var(--rule-strong);
+    border-radius: 3px;
+    background: var(--paper);
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    padding: 10px 12px;
+    line-height:1.5;
+    color: var(--ink);
+    min-height: 44px;
+    max-height: 160px;
+  }
+  textarea#composer:focus{ background: var(--white); }
+  button#send{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    background: var(--ink);
+    color: var(--paper);
+    border:none;
+    padding: 12px 18px;
+    border-radius: 3px;
+    cursor:pointer;
+    white-space:nowrap;
+    transition: background 0.15s ease, transform 0.1s ease;
+  }
+  button#send:hover:not(:disabled){ background: var(--pencil); }
+  button#send:active:not(:disabled){ transform: translateY(1px); }
+  button#send:disabled{ opacity:0.45; cursor:default; }
+
+  footer{
+    max-width:920px; margin:0 auto; padding: 0 24px 48px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-faint);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wordmark"><span class="ledger-mark"></span> Debit Club</div>
+  <div class="folio">FOLIO <span class="mono" id="folioNum">001</span></div>
+</header>
+
+<section class="hero">
+  <div class="eyebrow">The first rule of Debit Club</div>
+  <h1 class="headline">Every figure, <em>tied out<span class="tick">✓</span></em>.</h1>
+  <p class="sub">One assistant, three desks. Pick a practice — audit &amp; accounting, corporate finance, or equity research — and work the way that desk actually works.</p>
+</section>
+
+<nav class="tabs" id="tabs"></nav>
+
+<main class="stage">
+  <aside>
+    <p class="chip-panel-title">Quick tasks</p>
+    <div class="chips" id="chips"></div>
+  </aside>
+
+  <section class="chat-panel">
+    <div class="chat-head">
+      <span class="title" id="chatTitle">Audit &amp; Accounting Desk</span>
+      <button class="clear" id="clearBtn">clear thread</button>
+    </div>
+    <div class="messages" id="messages"></div>
+    <div class="input-row">
+      <textarea id="composer" placeholder="Ask about a journal entry, a reconciling item, a ratio…" rows="1"></textarea>
+      <button id="send">Post entry →</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Debit Club — an internal working assistant, not a source of truth. Verify against primary guidance.</span>
+  <span id="entryCount">0 entries posted</span>
+</footer>
+
+<script>
+const MODES = [
+  {
+    id: 'audit',
+    label: 'Audit & Accounting',
+    short: 'Desk 01',
+    desc: 'Bookkeeping, journal entries, standards',
+    title: 'Audit & Accounting Desk',
+    placeholder: 'Ask about a journal entry, a reconciling item, a ratio…',
+    system: `You are a senior accounting and audit staff assistant working inside "Debit Club", an internal tool for accounting and audit professionals. You help with: explaining accounting concepts (GAAP, IFRS, tax basics, audit procedures); bookkeeping and categorizing transactions; preparing journal entries from described business events; reconciling accounts and finding discrepancies; analyzing financial statements and ratios; drafting workpapers, memos, and documentation; researching and summarizing accounting standards and guidance; answering Excel questions and writing formulas; and flagging unusual trends or possible fraud indicators.
+
+Be precise and technically rigorous — this is used by people preparing for CPA exams, audit engagements, and real client work. When preparing journal entries, show account name, debit/credit, and a one-line rationale in a clean table-like text format. When citing GAAP/IFRS, name the specific standard (e.g., ASC 606, IAS 16) where relevant, but note you may not reflect the very latest amendments and recommend verifying against the current codification. Keep responses focused and workpaper-ready — avoid filler.`,
+    chips: [
+      'Explain the difference between GAAP and IFRS revenue recognition',
+      'Prepare the journal entry: company purchases equipment for $50,000 cash, 5-year useful life',
+      'Walk me through how to reconcile a bank statement with unexplained differences',
+      'What ratios should I calculate to assess a company\'s liquidity?',
+      'Draft a workpaper memo documenting a fixed asset test of details',
+      'Summarize the key requirements of ASC 606',
+      'Write an Excel formula to flag transactions over $10,000 posted on weekends',
+      'What are common fraud indicators I should look for in expense reports?'
+    ]
+  },
+  {
+    id: 'corpfin',
+    label: 'Corporate Finance',
+    short: 'Desk 02',
+    desc: 'Models, pitch books, company analysis',
+    title: 'Corporate Finance Desk',
+    placeholder: 'Ask for a model structure, a pitch book outline, a company teardown…',
+    system: `You are a corporate finance / investment banking analyst assistant working inside "Debit Club". You help with: building financial models; creating pitch book content and structure; analyzing companies; researching industries; summarizing earnings calls; and drafting presentation content.
+
+Be sharp, structured, and outcome-oriented, the way a good analyst supports a senior banker. When building models, describe the structure clearly (assumptions, drivers, statements, outputs) and give concrete line items rather than vague generalities — offer to lay it out as a table when useful. When drafting pitch book or presentation content, write in the terse, high-signal style used on real slides (headline + 2-3 supporting bullets), not prose paragraphs. Always flag where a number or fact would need to be sourced/verified against real filings or data, since you cannot pull live data yourself.`,
+    chips: [
+      'Outline the structure of a 3-statement financial model',
+      'Draft a pitch book slide on industry tailwinds for a target sector',
+      'What are the key steps to build a DCF valuation?',
+      'Help me analyze a company\'s competitive positioning — what framework should I use?',
+      'Summarize what to listen for in an earnings call transcript',
+      'Draft talking points for an M&A rationale slide',
+      'What are the key drivers I should model for a SaaS company?',
+      'Explain how to build a football field valuation chart'
+    ]
+  },
+  {
+    id: 'equity',
+    label: 'Equity Research',
+    short: 'Desk 03',
+    desc: 'Earnings reads, comps, valuation, trends',
+    title: 'Equity Research Desk',
+    placeholder: 'Paste a metric, ask for a comp approach, or a valuation build…',
+    system: `You are an equity research analyst assistant working inside "Debit Club". You help with: rapidly digesting earnings reports and filings; comparing companies; building valuation models; finding trends in financial statements; and summarizing relevant news.
+
+Write like a research analyst: crisp, numbers-forward, and explicit about what drives the conclusion. When comparing companies, structure the comparison around specific metrics (margins, growth, multiples, returns on capital) rather than generic prose. When asked to "read" or summarize a report, ask the person to paste the relevant text or figures if they haven't yet, since you don't have live access to filings — then work precisely from what they give you. Always distinguish between what's stated fact from the person's input versus your own analytical inference.`,
+    chips: [
+      'What\'s the fastest way to identify the key takeaways from an earnings report?',
+      'Compare two companies on margin trends — what should I paste in for you to analyze?',
+      'Walk me through building a comps table for relative valuation',
+      'What trends in a cash flow statement suggest deteriorating quality of earnings?',
+      'Summarize the key multiples used in equity valuation and when each applies',
+      'Help me structure a one-page company summary for a new coverage name',
+      'What questions should I ask when a company\'s revenue grows but margins shrink?',
+      'How do I adjust for one-time items when comparing quarterly results?'
+    ]
+  }
+];
+
+let currentModeId = 'audit';
+let threads = { audit: [], corpfin: [], equity: [] };
+let usedChips = { audit: new Set(), corpfin: new Set(), equity: new Set() };
+let entryCount = 0;
+let isLoading = false;
+
+const tabsEl = document.getElementById('tabs');
+const chipsEl = document.getElementById('chips');
+const messagesEl = document.getElementById('messages');
+const chatTitleEl = document.getElementById('chatTitle');
+const composer = document.getElementById('composer');
+const sendBtn = document.getElementById('send');
+const clearBtn = document.getElementById('clearBtn');
+const entryCountEl = document.getElementById('entryCount');
+const folioNumEl = document.getElementById('folioNum');
+
+function currentMode(){ return MODES.find(m => m.id === currentModeId); }
+
+function renderTabs(){
+  tabsEl.innerHTML = '';
+  MODES.forEach((m, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab' + (m.id === currentModeId ? ' active' : '');
+    btn.innerHTML = `<span class="num">${String(i+1).padStart(2,'0')}</span>${m.label}<span class="desc">${m.desc}</span>`;
+    btn.addEventListener('click', () => switchMode(m.id));
+    tabsEl.appendChild(btn);
+  });
+}
+
+function renderChips(){
+  const mode = currentMode();
+  chipsEl.innerHTML = '';
+  mode.chips.forEach((text) => {
+    const btn = document.createElement('button');
+    const used = usedChips[mode.id].has(text);
+    btn.className = 'chip' + (used ? ' used' : '');
+    btn.innerHTML = `<span class="mark">✓</span><span>${text}</span>`;
+    btn.addEventListener('click', () => {
+      composer.value = text;
+      composer.focus();
+      autoGrow();
+    });
+    chipsEl.appendChild(btn);
+  });
+}
+
+function renderMessages(){
+  const mode = currentMode();
+  messagesEl.innerHTML = '';
+  if(mode.title) chatTitleEl.textContent = mode.title;
+  if(threads[mode.id].length === 0){
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = `<span class="hand">✓</span>&nbsp; Nothing posted to this desk yet. Pick a quick task at left, or type your own.`;
+    messagesEl.appendChild(empty);
+    return;
+  }
+  threads[mode.id].forEach(msg => {
+    const row = document.createElement('div');
+    row.className = 'msg ' + msg.role;
+    const roleLabel = msg.role === 'user' ? 'You' : 'Debit Club';
+    row.innerHTML = `<div class="role">${roleLabel}</div><div class="bubble">${escapeAndFormat(msg.content)}</div>`;
+    messagesEl.appendChild(row);
+  });
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function escapeAndFormat(text){
+  const div = document.createElement('div');
+  div.textContent = text;
+  let escaped = div.innerHTML;
+  escaped = escaped.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  escaped = escaped.replace(/`(.+?)`/g, '<code>$1</code>');
+  return escaped;
+}
+
+function switchMode(id){
+  if(isLoading) return;
+  currentModeId = id;
+  renderTabs();
+  renderChips();
+  renderMessages();
+  composer.placeholder = currentMode().placeholder;
+}
+
+function autoGrow(){
+  composer.style.height = 'auto';
+  composer.style.height = Math.min(composer.scrollHeight, 160) + 'px';
+}
+composer.addEventListener('input', autoGrow);
+composer.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    handleSend();
+  }
+});
+
+clearBtn.addEventListener('click', () => {
+  if(isLoading) return;
+  threads[currentModeId] = [];
+  renderMessages();
+});
+
+sendBtn.addEventListener('click', handleSend);
+
+async function handleSend(){
+  const text = composer.value.trim();
+  if(!text || isLoading) return;
+
+  const mode = currentMode();
+  if(mode.chips.includes(text)){
+    usedChips[mode.id].add(text);
+  }
+
+  threads[mode.id].push({ role:'user', content:text });
+  composer.value = '';
+  autoGrow();
+  renderChips();
+  renderMessages();
+
+  isLoading = true;
+  sendBtn.disabled = true;
+  const loadingRow = document.createElement('div');
+  loadingRow.className = 'msg assistant';
+  loadingRow.id = 'loadingRow';
+  loadingRow.innerHTML = `<div class="role">Debit Club</div><div class="loading-row">working the file <span class="ticks"><span>✓</span><span>✓</span><span>✓</span></span></div>`;
+  messagesEl.appendChild(loadingRow);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  try{
+    const apiMessages = threads[mode.id].map(m => ({ role: m.role, content: m.content }));
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        system: mode.system,
+        messages: apiMessages
+      })
+    });
+
+    const data = await response.json();
+    if(!response.ok){
+      throw new Error(data.error || ("Request failed with status " + response.status));
+    }
+    const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text);
+    const reply = textBlocks.join('\n\n') || "No response text returned.";
+
+    document.getElementById('loadingRow')?.remove();
+    threads[mode.id].push({ role:'assistant', content: reply });
+    entryCount++;
+    entryCountEl.textContent = entryCount + (entryCount === 1 ? ' entry posted' : ' entries posted');
+    folioNumEl.textContent = String(entryCount + 1).padStart(3,'0');
+    renderMessages();
+  }catch(err){
+    document.getElementById('loadingRow')?.remove();
+    const errRow = document.createElement('div');
+    errRow.className = 'error-row';
+    errRow.textContent = 'Could not reach the assistant. ' + (err && err.message ? err.message : 'Please try again.');
+    messagesEl.appendChild(errRow);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }finally{
+    isLoading = false;
+    sendBtn.disabled = false;
+  }
+}
+
+renderTabs();
+renderChips();
+renderMessages();
+</script>
+
+</body>
+</html>
