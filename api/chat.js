@@ -29,9 +29,29 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Thread too long. Please clear the thread and start again." });
   }
   for (const m of messages) {
-    if (!m || (m.role !== "user" && m.role !== "assistant") || typeof m.content !== "string") {
-      return res.status(400).json({ error: "Each message needs a valid role and string content." });
+    if (!m || (m.role !== "user" && m.role !== "assistant")) {
+      return res.status(400).json({ error: "Each message needs a valid role." });
     }
+    if (typeof m.content === "string") {
+      continue;
+    }
+    if (Array.isArray(m.content)) {
+      const validBlock = (b) => {
+        if (!b || typeof b !== "object") return false;
+        if (b.type === "text") return typeof b.text === "string";
+        if (b.type === "image" || b.type === "document") {
+          return b.source && b.source.type === "base64"
+            && typeof b.source.media_type === "string"
+            && typeof b.source.data === "string";
+        }
+        return false;
+      };
+      if (m.content.length === 0 || !m.content.every(validBlock)) {
+        return res.status(400).json({ error: "Malformed attachment content in a message." });
+      }
+      continue;
+    }
+    return res.status(400).json({ error: "Each message needs valid string or block-array content." });
   }
 
   try {
@@ -63,3 +83,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Could not reach Anthropic API: " + err.message });
   }
 }
+
